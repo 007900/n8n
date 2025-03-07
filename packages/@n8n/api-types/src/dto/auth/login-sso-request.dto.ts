@@ -1,0 +1,31 @@
+import { z } from 'zod';
+import { Z } from 'zod-class';
+
+export class LoginSSORequestDto extends Z.class({
+	"openid.claimed_id": z.string(),
+	"openid.identity": z.string(),
+	"openid.sig": z.string(),
+	"openid.signed": z.string(),
+	"openid.assoc_handle": z.string(),
+	"openid.op_endpoint": z.string(),
+	"openid.return_to": z.string(),
+	"openid.response_nonce": z.string(),
+	"openid.mode": z.string(),
+	"openid.ns": z.string(),
+	"openid.ns.alias3": z.string(),
+	"openid.alias3.mode": z.string(),
+	"openid.alias3.type.alias1": z.string(),
+	"openid.alias3.value.alias1": z.string(),
+	"openid.alias3.type.alias2": z.string(),
+	"openid.alias3.value.alias2": z.string(),
+	"openid.alias3.type.alias3": z.string(),
+	"openid.alias3.value.alias3": z.string(),
+	"openid.alias3.type.alias4": z.string(),
+	"openid.alias3.value.alias4": z.string(),
+	"openid.alias3.type.alias5": z.string(),
+	"openid.alias3.value.alias5": z.string(),
+	"openid.alias3.type.alias6": z.string(),
+	"openid.alias3.value.alias6": z.string(),
+	"openid.alias3.type.alias7": z.string(),
+	"openid.alias3.value.alias7": z.string(),
+}) {}

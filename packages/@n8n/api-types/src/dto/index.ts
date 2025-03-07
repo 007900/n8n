@@ -4,6 +4,7 @@ export { AiApplySuggestionRequestDto } from './ai/ai-apply-suggestion-request.dt
 export { AiFreeCreditsRequestDto } from './ai/ai-free-credits-request.dto';
 
 export { LoginRequestDto } from './auth/login-request.dto';
+export { LoginSSORequestDto } from './auth/login-sso-request.dto';
 export { ResolveSignupTokenQueryDto } from './auth/resolve-signup-token-query.dto';
 
 export { OptionsRequestDto } from './dynamic-node-parameters/options-request.dto';

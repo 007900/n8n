@@ -1,10 +1,11 @@
-import { LoginRequestDto, ResolveSignupTokenQueryDto } from '@n8n/api-types';
+import { LoginRequestDto, LoginSSORequestDto, ResolveSignupTokenQueryDto } from '@n8n/api-types';
 import { isEmail } from 'class-validator';
 import { Response } from 'express';
 import { Logger } from 'n8n-core';
 
-import { handleEmailLogin, handleLdapLogin } from '@/auth';
+import { handleEmailLogin, handleLdapLogin, handleSSOLogin } from '@/auth';
 import { AuthService } from '@/auth/auth.service';
+import { nhso_sso_config } from '@/config/nhso-sso';
 import { RESPONSE_ERROR_MESSAGES } from '@/constants';
 import type { User } from '@/databases/entities/user';
 import { UserRepository } from '@/databases/repositories/user.repository';
@@ -18,6 +19,7 @@ import { License } from '@/license';
 import { MfaService } from '@/mfa/mfa.service';
 import { PostHogClient } from '@/posthog';
 import { AuthenticatedRequest, AuthlessRequest } from '@/requests';
+import { UrlService } from '@/services/url.service';
 import { UserService } from '@/services/user.service';
 import {
 	getCurrentAuthenticationMethod,
@@ -34,9 +36,66 @@ export class AuthController {
 		private readonly userService: UserService,
 		private readonly license: License,
 		private readonly userRepository: UserRepository,
+		private readonly urlService: UrlService,
 		private readonly eventService: EventService,
 		private readonly postHog?: PostHogClient,
 	) {}
+
+	/** NHSO SSO */
+	@Get('/nhso/sso', { skipAuth: true })
+	async nhsoSSO(
+		_req: AuthlessRequest,
+		res: Response,) {
+			const params = [];
+			for (const [key, val] of Object.entries(nhso_sso_config.params)) {
+				if (key === "openid.return_to") {
+					params.push(`${key}=${encodeURIComponent(this.urlService.getInstanceBaseUrl() + "/rest/nhso/login")}`);
+					continue;
+				}
+				else if (key === "openid.realm") {
+					params.push(`${key}=${encodeURIComponent(this.urlService.getInstanceBaseUrl() + "/rest/nhso/login")}`);
+					continue;
+				}
+				params.push(`${key}=${encodeURIComponent(val)}`);
+			}
+			return res.send({"data": {"url": `${nhso_sso_config.url}?${params.join("&")}`}});
+	}
+
+	/** NHSO Login */
+	@Post('/nhso/login', { skipAuth: true, rateLimit: true })
+	async nhsoLogin(req: AuthlessRequest, res: Response, @Body payload: LoginSSORequestDto) {
+		let user: User | undefined;
+
+		let existingUser = await this.userRepository.findByEmail(payload['openid.alias3.value.alias1']);
+		if (!existingUser) {
+			existingUser = await this.userService.createNHSOUser(
+				payload['openid.alias3.value.alias1'],
+				payload['openid.alias3.value.alias3'],
+			);
+		}
+
+		if (existingUser) {
+			user = await handleSSOLogin(existingUser?.email);
+
+			if (user) {
+				this.authService.issueCookie(res, user, req.browserId);
+
+				this.eventService.emit('user-logged-in', {
+					user,
+					authenticationMethod: 'email',
+				});
+
+				return res.redirect(this.urlService.getInstanceBaseUrl() + '/');
+			}
+		}
+
+		this.eventService.emit('user-login-failed', {
+			userEmail: 'unknown',
+			authenticationMethod: 'email',
+		});
+
+		throw new AuthError('SSO Authentication failed.');
+	}
 
 	/** Log in a user */
 	@Post('/login', { skipAuth: true, rateLimit: true })

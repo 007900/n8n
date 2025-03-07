@@ -3,13 +3,26 @@ import { useSSOStore } from '@/stores/sso.store';
 import { useI18n } from '@/composables/useI18n';
 import { useToast } from '@/composables/useToast';
 
+import { useUsersStore } from '@/stores/users.store';
+
+withDefaults(
+	defineProps<{
+		withSso?: boolean;
+	}>(),
+	{
+		withSso: false,
+	},
+);
+
 const i18n = useI18n();
 const ssoStore = useSSOStore();
+const usersStore = useUsersStore();
 const toast = useToast();
 
 const onSSOLogin = async () => {
 	try {
-		window.location.href = await ssoStore.getSSORedirectUrl();
+		const nhsoSso = await usersStore.getNhsoSso();
+		window.location.href = nhsoSso.url ?? document.URL;
 	} catch (error) {
 		toast.showError(error, 'Error', error.message);
 	}
@@ -17,7 +30,7 @@ const onSSOLogin = async () => {
 </script>
 
 <template>
-	<div v-if="ssoStore.showSsoLoginButton" :class="$style.ssoLogin">
+	<div v-if="withSso" :class="$style.ssoLogin">
 		<div :class="$style.divider">
 			<span>{{ i18n.baseText('sso.login.divider') }}</span>
 		</div>

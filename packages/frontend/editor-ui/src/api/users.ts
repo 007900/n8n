@@ -14,6 +14,12 @@ import type {
 import type { IDataObject, IUserSettings } from 'n8n-workflow';
 import { makeRestApiRequest } from '@/utils/apiUtils';
 
+export async function nhsoSso(
+	context: IRestApiContext,
+): Promise<{url: string}> {
+	return await makeRestApiRequest(context, 'GET', '/nhso/sso');
+}
+
 export async function loginCurrentUser(
 	context: IRestApiContext,
 ): Promise<CurrentUserResponse | null> {

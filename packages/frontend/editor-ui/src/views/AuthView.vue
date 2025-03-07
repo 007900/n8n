@@ -56,7 +56,9 @@ const {
 				@submit="onSubmit"
 				@update="onUpdate"
 			>
-				<SSOLogin v-if="withSso" />
+				<SSOLogin
+				v-if="withSso"
+				:with-sso="true" />
 			</n8n-form-box>
 		</div>
 	</div>

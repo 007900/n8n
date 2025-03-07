@@ -136,6 +136,10 @@ export const useUsersStore = defineStore(STORES.USERS, () => {
 		npsSurveyStore.setupNpsSurveyOnLogin(user.id, user.settings);
 	};
 
+	const getNhsoSso = async () => {
+		return await usersApi.nhsoSso(rootStore.restApiContext);
+	}
+
 	const loginWithCookie = async () => {
 		const user = await usersApi.loginCurrentUser(rootStore.restApiContext);
 		if (!user) {
@@ -389,6 +393,7 @@ export const useUsersStore = defineStore(STORES.USERS, () => {
 		userClaimedAiCredits,
 		isEasyAIWorkflowOnboardingDone,
 		addUsers,
+		getNhsoSso,
 		loginWithCookie,
 		initialize,
 		setPersonalizationAnswers,

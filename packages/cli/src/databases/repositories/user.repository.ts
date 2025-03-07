@@ -1,6 +1,6 @@
 import { Service } from '@n8n/di';
 import type { DeepPartial, EntityManager, FindManyOptions } from '@n8n/typeorm';
-import { DataSource, In, IsNull, Not, Repository } from '@n8n/typeorm';
+import { DataSource, Equal, In, IsNull, Not, Repository } from '@n8n/typeorm';
 
 import type { ListQuery } from '@/requests';
 
@@ -46,6 +46,15 @@ export class UserRepository extends Repository<User> {
 			where: { email: In(emails) },
 			select: ['email', 'password', 'id'],
 		});
+	}
+
+	async findByEmail(email: string) {
+		const users = await this.find({
+			where: { email: Equal(email) },
+			select: ['email', 'password', 'id'],
+		});
+
+		return users.length ? users[0] : undefined;
 	}
 
 	async deleteMany(userIds: string[]) {

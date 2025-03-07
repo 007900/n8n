@@ -3,7 +3,7 @@ import { Logger } from 'n8n-core';
 import type { IUserSettings } from 'n8n-workflow';
 import { UnexpectedError } from 'n8n-workflow';
 
-import type { User, AssignableRole } from '@/databases/entities/user';
+import { User, AssignableRole } from '@/databases/entities/user';
 import { UserRepository } from '@/databases/repositories/user.repository';
 import { InternalServerError } from '@/errors/response-errors/internal-server.error';
 import { EventService } from '@/events/event.service';
@@ -177,6 +177,40 @@ export class UserService {
 				return invitedUser;
 			}),
 		);
+	}
+
+	async createNHSOUser(email: string, fullName: string): Promise<User | undefined> {
+		let createdUsers: User | undefined = undefined;
+		let separate = fullName.indexOf(' ');
+		const firstName = fullName.substring(0, separate);
+		const lastName = fullName.substring(separate + 1);
+
+		const newUser = new User();
+		newUser.email = email;
+		newUser.firstName = firstName;
+		newUser.lastName = lastName;
+		newUser.role = "global:member";
+		newUser.isPending = false;
+
+		this.logger.debug('Creating 1 user shell...');
+
+		try {
+			await this.getManager().transaction(
+				async (transactionManager) => {
+					let { user: savedUser } = await this.userRepository.createUserWithProject(
+						newUser,
+						transactionManager,
+					);
+
+					createdUsers = savedUser;
+				}
+			);
+
+			return createdUsers;
+		} catch (error) {
+				this.logger.error('Failed to create user shells', { userShells: createdUsers });
+				throw new InternalServerError('An error occurred during user creation', error);
+		}
 	}
 
 	async inviteUsers(owner: User, invitations: Invitation[]) {
